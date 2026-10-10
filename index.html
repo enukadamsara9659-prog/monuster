@@ -7,7 +7,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23ff8a3a'/%3E%3Ccircle cx='21' cy='11' r='3' fill='%2314161a'/%3E%3Ccircle cx='12' cy='19' r='2' fill='%2314161a'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
   <!-- ==================== 3D CANVAS ==================== -->
@@ -29,7 +29,7 @@
       <h1 class="loading-title">METEORFALL</h1>
       <h2 class="loading-sub">THE LAST DAWN</h2>
       <div class="loading-bar-track"><div id="loading-bar"></div></div>
-      <div class="loading-text">Loading the world…</div>
+      <div class="loading-text" id="loading-status">Loading the world…</div>
       <div id="loading-tip">Monsters are more active at night.</div>
     </div>
   </div>
@@ -209,72 +209,72 @@
   </div>
 
   <!-- ==================== SCRIPTS (dependency order) ==================== -->
-  <script src="js/vendor/three.min.js"></script>
-  <script src="js/core/EmbeddedTextures.js"></script>
-  <script src="js/core/Utils.js"></script>
-  <script src="js/core/AssetLoader.js"></script>
-  <script src="js/core/SceneManager.js"></script>
-  <script src="js/core/InputManager.js"></script>
-  <script src="js/core/AudioManager.js"></script>
-  <script src="js/core/SaveManager.js"></script>
-  <script src="js/core/UIManager.js"></script>
+  <script src="js/vendor/three.min.js?v=5"></script>
+  <script src="js/core/EmbeddedTextures.js?v=5"></script>
+  <script src="js/core/Utils.js?v=5"></script>
+  <script src="js/core/AssetLoader.js?v=5"></script>
+  <script src="js/core/SceneManager.js?v=5"></script>
+  <script src="js/core/InputManager.js?v=5"></script>
+  <script src="js/core/AudioManager.js?v=5"></script>
+  <script src="js/core/SaveManager.js?v=5"></script>
+  <script src="js/core/UIManager.js?v=5"></script>
 
-  <script src="js/effects/ParticleSystem.js"></script>
-  <script src="js/effects/MuzzleFlash.js"></script>
-  <script src="js/effects/ExplosionEffect.js"></script>
-  <script src="js/effects/PostProcessing.js"></script>
-  <script src="js/effects/WeatherEffects.js"></script>
-  <script src="js/effects/MeteorImpactSequence.js"></script>
+  <script src="js/effects/ParticleSystem.js?v=5"></script>
+  <script src="js/effects/MuzzleFlash.js?v=5"></script>
+  <script src="js/effects/ExplosionEffect.js?v=5"></script>
+  <script src="js/effects/PostProcessing.js?v=5"></script>
+  <script src="js/effects/WeatherEffects.js?v=5"></script>
+  <script src="js/effects/MeteorImpactSequence.js?v=5"></script>
 
-  <script src="js/world/TerrainGenerator.js"></script>
-  <script src="js/world/WaterSystem.js"></script>
-  <script src="js/world/VegetationSystem.js"></script>
-  <script src="js/world/BuildingGenerator.js"></script>
-  <script src="js/world/MeteorCrater.js"></script>
-  <script src="js/world/DayNightCycle.js"></script>
-  <script src="js/world/WeatherSystem.js"></script>
-  <script src="js/world/WorldGenerator.js"></script>
+  <script src="js/world/TerrainGenerator.js?v=5"></script>
+  <script src="js/world/WaterSystem.js?v=5"></script>
+  <script src="js/world/VegetationSystem.js?v=5"></script>
+  <script src="js/world/BuildingGenerator.js?v=5"></script>
+  <script src="js/world/MeteorCrater.js?v=5"></script>
+  <script src="js/world/DayNightCycle.js?v=5"></script>
+  <script src="js/world/WeatherSystem.js?v=5"></script>
+  <script src="js/world/WorldGenerator.js?v=5"></script>
 
-  <script src="js/characters/PlayerAnimator.js"></script>
-  <script src="js/characters/PlayerCharacter.js"></script>
-  <script src="js/characters/PlayerController.js"></script>
-  <script src="js/characters/SquadMember.js"></script>
-  <script src="js/characters/SquadAI.js"></script>
-  <script src="js/characters/SquadManager.js"></script>
-  <script src="js/characters/NPCManager.js"></script>
+  <script src="js/characters/PlayerAnimator.js?v=5"></script>
+  <script src="js/characters/PlayerCharacter.js?v=5"></script>
+  <script src="js/characters/PlayerController.js?v=5"></script>
+  <script src="js/characters/SquadMember.js?v=5"></script>
+  <script src="js/characters/SquadAI.js?v=5"></script>
+  <script src="js/characters/SquadManager.js?v=5"></script>
+  <script src="js/characters/NPCManager.js?v=5"></script>
 
-  <script src="js/combat/HealthSystem.js"></script>
-  <script src="js/combat/DamageSystem.js"></script>
-  <script src="js/combat/WeaponBase.js"></script>
-  <script src="js/combat/ProjectileSystem.js"></script>
-  <script src="js/combat/CombatEffects.js"></script>
-  <script src="js/combat/WeaponSystem.js"></script>
+  <script src="js/combat/HealthSystem.js?v=5"></script>
+  <script src="js/combat/DamageSystem.js?v=5"></script>
+  <script src="js/combat/WeaponBase.js?v=5"></script>
+  <script src="js/combat/ProjectileSystem.js?v=5"></script>
+  <script src="js/combat/CombatEffects.js?v=5"></script>
+  <script src="js/combat/WeaponSystem.js?v=5"></script>
 
-  <script src="js/monsters/MonsterBase.js"></script>
-  <script src="js/monsters/MonsterAI.js"></script>
-  <script src="js/monsters/MonsterTypes.js"></script>
-  <script src="js/monsters/BossMonster.js"></script>
-  <script src="js/monsters/MonsterSpawner.js"></script>
-  <script src="js/monsters/MonsterManager.js"></script>
+  <script src="js/monsters/MonsterBase.js?v=5"></script>
+  <script src="js/monsters/MonsterAI.js?v=5"></script>
+  <script src="js/monsters/MonsterTypes.js?v=5"></script>
+  <script src="js/monsters/BossMonster.js?v=5"></script>
+  <script src="js/monsters/MonsterSpawner.js?v=5"></script>
+  <script src="js/monsters/MonsterManager.js?v=5"></script>
 
-  <script src="js/vehicles/VehiclePhysics.js"></script>
-  <script src="js/vehicles/VehicleBase.js"></script>
-  <script src="js/vehicles/VehicleSystem.js"></script>
+  <script src="js/vehicles/VehiclePhysics.js?v=5"></script>
+  <script src="js/vehicles/VehicleBase.js?v=5"></script>
+  <script src="js/vehicles/VehicleSystem.js?v=5"></script>
 
-  <script src="js/missions/MissionBase.js"></script>
-  <script src="js/missions/StoryMissions.js"></script>
-  <script src="js/missions/SideMissions.js"></script>
-  <script src="js/missions/MissionManager.js"></script>
+  <script src="js/missions/MissionBase.js?v=5"></script>
+  <script src="js/missions/StoryMissions.js?v=5"></script>
+  <script src="js/missions/SideMissions.js?v=5"></script>
+  <script src="js/missions/MissionManager.js?v=5"></script>
 
-  <script src="js/ui/HUD.js"></script>
-  <script src="js/ui/MainMenu.js"></script>
-  <script src="js/ui/PauseMenu.js"></script>
-  <script src="js/ui/InventoryUI.js"></script>
-  <script src="js/ui/MapUI.js"></script>
-  <script src="js/ui/WeaponWheel.js"></script>
-  <script src="js/ui/SquadCommandUI.js"></script>
-  <script src="js/ui/MissionUI.js"></script>
+  <script src="js/ui/HUD.js?v=5"></script>
+  <script src="js/ui/MainMenu.js?v=5"></script>
+  <script src="js/ui/PauseMenu.js?v=5"></script>
+  <script src="js/ui/InventoryUI.js?v=5"></script>
+  <script src="js/ui/MapUI.js?v=5"></script>
+  <script src="js/ui/WeaponWheel.js?v=5"></script>
+  <script src="js/ui/SquadCommandUI.js?v=5"></script>
+  <script src="js/ui/MissionUI.js?v=5"></script>
 
-  <script src="js/core/Game.js"></script>
+  <script src="js/core/Game.js?v=5"></script>
 </body>
 </html>

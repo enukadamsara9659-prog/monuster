@@ -212,6 +212,9 @@ function check(name, fn) {
   try { fn(); console.log("  ✔ " + name); passed++; }
   catch (e) { console.log("  ✘ " + name + " — " + e.message); failed++; }
 }
+
+// speed up the asset watchdog for testing
+MF.AssetLoader.WATCHDOG_MS = 60;
 function pumpFrames(n, msPerFrame) {
   for (let i = 0; i < n; i++) {
     now += msPerFrame || 16;
@@ -310,6 +313,28 @@ const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
     pumpFrames(600);
     assert(MF.game.state === "PLAYING", "unexpected state " + MF.game.state);
     assert(MF.game.monsters.list.length >= 0, "monster list broken");
+  });
+
+  // watchdog: a texture decode that NEVER returns must not block boot
+  await new Promise((resolve) => {
+    const loader = new MF.AssetLoader();
+    loader.loader.load = (url, onLoad) => {
+      if (url !== "HANG") {
+        const t = new THREE.Texture();
+        if (onLoad) onLoad(t);
+      }
+      return null; // "HANG" never calls back
+    };
+    sandbox.MF_TEXTURES = { ok1: "A", ok2: "B", bad: "HANG" };
+    let done = false;
+    loader.loadAll(() => {}, () => { done = true; });
+    setTimeout(() => {
+      check("asset loader watchdog: hung decode cannot block the loading screen", () => {
+        if (!done) throw new Error("onDone never fired — game would hang at 92% forever!");
+        if (!loader.textures.bad) throw new Error("procedural fallback missing for hung texture");
+      });
+      resolve();
+    }, 300);
   });
 
   console.log(failed === 0 ? `\nALL ${passed} BOOT TESTS PASSED` : `\n${passed} passed, ${failed} FAILED`);

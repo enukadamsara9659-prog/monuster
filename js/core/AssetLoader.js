@@ -16,38 +16,46 @@
       this.ready = false;
     }
 
-    /* Load everything with a progress callback (0..1). */
+    /* Load everything with a progress callback (0..1).
+       Hang-proof: a stuck texture decode can never block the game. */
     loadAll(onProgress, onDone) {
       const pack = window.MF_TEXTURES || {};
       const names = Object.keys(pack);
       const total = names.length + 1; // +1 for procedural set
       let done = 0;
+      let finished = false;
+
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        this.ready = true;
+        if (onDone) onDone();
+      };
       const tick = () => {
         done++;
-        this.progress = done / total;
+        this.progress = Math.min(1, done / total);
         if (onProgress) onProgress(this.progress);
-        if (done >= total && !this.ready) {
-          this.ready = true;
-          if (onDone) onDone();
-        }
+        if (done >= total) finish();
       };
 
       names.forEach((name) => {
+        let called = false;
+        const once = (fn) => { if (!called) { called = true; fn(); } };
         this.loader.load(
           pack[name],
-          (tex) => {
+          (tex) => once(() => {
             tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
             tex.encoding = THREE.sRGBEncoding;
             tex.anisotropy = 4;
             this.textures[name] = tex;
             tick();
-          },
+          }),
           undefined,
-          () => {
+          () => once(() => {
             // graceful fallback: procedural texture
             this.textures[name] = this.makeProcedural(name);
             tick();
-          }
+          })
         );
       });
 
@@ -55,11 +63,18 @@
       this.buildProceduralExtras();
       tick();
 
-      // safety: if the manager never fires (no textures), resolve soon
-      if (names.length === 0) {
-        this.ready = true;
-        if (onDone) onDone();
-      }
+      // safety: no textures at all
+      if (names.length === 0) finish();
+
+      // WATCHDOG: if any decode hangs (blocked image, CSP, etc.), continue anyway
+      setTimeout(() => {
+        if (finished) return;
+        console.warn("METEORFALL: asset load timed out — continuing with procedural fallbacks.");
+        for (const name of names) {
+          if (!this.textures[name]) this.textures[name] = this.makeProcedural(name);
+        }
+        finish();
+      }, MF.AssetLoader.WATCHDOG_MS || 8000);
     }
 
     get(name, repeat) {

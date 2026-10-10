@@ -99,6 +99,8 @@
         (p) => {
           const bar = document.getElementById("loading-bar");
           if (bar) bar.style.width = Math.round(p * 100) + "%";
+          const status = document.getElementById("loading-status");
+          if (status) status.textContent = "Loading the world… " + Math.round(p * 100) + "%";
         },
         () => this.onAssetsLoaded()
       );
@@ -144,6 +146,8 @@
         this.world.build(this.scene, MF.assets, (p) => {
           const bar = document.getElementById("loading-bar");
           if (bar) bar.style.width = Math.round(60 + p * 40) + "%";
+          const status = document.getElementById("loading-status");
+          if (status) status.textContent = "Building the world… " + Math.round(60 + p * 40) + "%";
         });
 
         // world build steps run synchronously; finish setup
@@ -331,6 +335,16 @@
     /* ---------------- main loop ---------------- */
     gameLoop(timestamp) {
       requestAnimationFrame((t) => this.gameLoop(t));
+
+      // belt & braces: never let a stale loading screen cover the game
+      if (this.state !== STATE.LOADING && !this._loadingHidden) {
+        const ls = document.getElementById("loading-screen");
+        if (ls) {
+          if (!ls.classList.contains("hidden")) ls.classList.add("hidden");
+          this._loadingHidden = true;
+        }
+      }
+
       let dt = (timestamp - this.lastTime) / 1000;
       this.lastTime = timestamp;
       dt = Math.min(dt, 1 / 30);
