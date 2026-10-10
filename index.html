@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>METEORFALL: THE LAST DAWN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- ==================== 3D CANVAS ==================== -->
+  <div id="game-canvas-wrap">
+    <canvas id="game-canvas"></canvas>
+  </div>
+
+  <!-- ==================== SCREEN FX OVERLAYS ==================== -->
+  <div id="vignette"></div>
+  <div id="underwater-overlay"></div>
+  <div id="infected-overlay"></div>
+  <div id="damage-overlay"></div>
+  <div id="flash-overlay"></div>
+  <div id="fade-overlay"></div>
+
+  <!-- ==================== LOADING ==================== -->
+  <div id="loading-screen">
+    <div class="loading-box">
+      <h1 class="loading-title">METEORFALL</h1>
+      <h2 class="loading-sub">THE LAST DAWN</h2>
+      <div class="loading-bar-track"><div id="loading-bar"></div></div>
+      <div class="loading-text">Loading the world…</div>
+      <div id="loading-tip">Monsters are more active at night.</div>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN MENU ==================== -->
+  <div id="main-menu" class="hidden">
+    <div class="menu-panel">
+      <h1 id="game-title">METEORFALL</h1>
+      <h2 class="menu-subtitle">THE LAST DAWN</h2>
+      <p class="menu-tagline">"No one is safe after dark."</p>
+      <div class="menu-buttons">
+        <button class="btn big" data-action="new-game">NEW GAME</button>
+        <button class="btn big" id="btn-continue" data-action="continue-game">CONTINUE</button>
+        <button class="btn big" data-action="open-settings">SETTINGS</button>
+        <button class="btn big" data-action="open-credits">CREDITS</button>
+      </div>
+      <div class="menu-footer">Three.js · procedurally generated world · AI-assisted development</div>
+    </div>
+  </div>
+
+  <!-- ==================== HUD ==================== -->
+  <div id="hud" class="hidden">
+    <!-- top left -->
+    <div id="hud-top-left">
+      <canvas id="minimap" width="200" height="200"></canvas>
+      <div id="compass">N</div>
+      <div id="mission-title">CH1 — Survive the Impact</div>
+      <div id="mission-objective"></div>
+    </div>
+
+    <!-- top right -->
+    <div id="squad-panels"></div>
+
+    <!-- bottom left -->
+    <div id="hud-bottom-left">
+      <div class="bar-label">HEALTH <span id="health-text">100 / 100</span></div>
+      <div class="bar-track wide"><div id="health-fill" class="bar-fill health"></div></div>
+      <div class="bar-label small">STAMINA</div>
+      <div class="bar-track"><div id="stamina-fill" class="bar-fill stamina"></div></div>
+    </div>
+
+    <!-- bottom right -->
+    <div id="hud-bottom-right">
+      <div id="weapon-icon" class="weapon-icon">▰</div>
+      <div>
+        <div id="weapon-name">AR-Standard</div>
+        <div class="ammo-line">AMMO <span class="ammo-inf">∞</span> · <span id="weapon-mode">AUTO</span></div>
+      </div>
+    </div>
+
+    <!-- center -->
+    <div id="crosshair"><span class="ch-line ch-t"></span><span class="ch-line ch-b"></span><span class="ch-line ch-l"></span><span class="ch-line ch-r"></span></div>
+    <div id="hit-marker"></div>
+    <div id="damage-numbers"></div>
+    <div id="damage-indicators"></div>
+    <div id="interaction-prompt"></div>
+    <div id="dialogue-line"></div>
+    <div id="fps-counter" class="hidden">60 FPS</div>
+    <div id="skip-hint" class="hidden">Press <b>ENTER</b> to skip</div>
+  </div>
+
+  <!-- ==================== WHEELS ==================== -->
+  <div id="weapon-wheel" class="hidden">
+    <div class="wheel-center">WEAPONS</div>
+    <div id="weapon-wheel-slots" class="wheel-grid"></div>
+  </div>
+  <div id="squad-wheel" class="hidden">
+    <div class="wheel-center">SQUAD COMMAND</div>
+    <div id="squad-wheel-slots" class="wheel-grid"></div>
+  </div>
+
+  <!-- ==================== PAUSE ==================== -->
+  <div id="pause-menu" class="hidden">
+    <div class="menu-panel compact">
+      <h2>PAUSED</h2>
+      <div class="menu-buttons">
+        <button class="btn big" data-action="resume">RESUME</button>
+        <button class="btn big" data-action="open-settings">SETTINGS</button>
+        <button class="btn big" data-action="save-game">SAVE GAME</button>
+        <button class="btn big" data-action="load-game">LOAD GAME</button>
+        <button class="btn big" data-action="main-menu">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SETTINGS ==================== -->
+  <div id="settings-panel" class="hidden">
+    <div class="menu-panel compact">
+      <h2>SETTINGS</h2>
+      <div class="setting-row"><label>Music Volume</label><input type="range" id="set-music" min="0" max="100" value="55"></div>
+      <div class="setting-row"><label>SFX Volume</label><input type="range" id="set-sfx" min="0" max="100" value="90"></div>
+      <div class="setting-row"><label>Mouse Sensitivity</label><input type="range" id="set-sens" min="20" max="250" value="100"></div>
+      <div class="menu-buttons">
+        <button class="btn big" data-action="close-settings">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SAVE / LOAD ==================== -->
+  <div id="save-load-panel" class="hidden">
+    <div class="menu-panel wide">
+      <h2 id="save-load-title">SAVE GAME</h2>
+      <div id="slots-list"></div>
+      <div class="menu-buttons">
+        <button class="btn big" data-action="close-save-load">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== INVENTORY ==================== -->
+  <div id="inventory-panel" class="hidden">
+    <div class="menu-panel wide">
+      <h2>WEAPONS</h2>
+      <div id="inventory-grid"></div>
+      <div class="menu-buttons">
+        <button class="btn big" data-action="close-inventory">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MAP ==================== -->
+  <div id="map-panel" class="hidden">
+    <div class="menu-panel wide">
+      <h2>ASHEN ISLAND</h2>
+      <canvas id="map-canvas" width="720" height="720"></canvas>
+      <div class="map-hint">Click a discovered location to fast travel · Scroll to zoom</div>
+      <div class="menu-buttons">
+        <button class="btn big" data-action="close-map">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TITLE / MISSION CARDS ==================== -->
+  <div id="title-card"></div>
+  <div id="mission-complete"></div>
+  <div id="notification"></div>
+
+  <!-- ==================== DEATH ==================== -->
+  <div id="death-screen" class="hidden">
+    <div class="death-box">
+      <h1>YOU DIED</h1>
+      <p>The dawn still owes you a favor.</p>
+      <button class="btn big" data-action="respawn">RESPAWN</button>
+    </div>
+  </div>
+
+  <!-- ==================== VICTORY ==================== -->
+  <div id="victory-screen" class="hidden">
+    <div class="menu-panel">
+      <h1 class="victory-title">METEORFALL</h1>
+      <h2 class="victory-sub">CONGRATULATIONS</h2>
+      <p class="victory-text">The infection has been stopped. Dawn breaks over Ashen Island.</p>
+      <div id="victory-stats"></div>
+      <div class="menu-buttons">
+        <button class="btn big" data-action="new-game-plus">NEW GAME+</button>
+        <button class="btn big" data-action="victory-menu">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CREDITS ==================== -->
+  <div id="credits-screen" class="hidden">
+    <div class="menu-panel">
+      <h2>CREDITS</h2>
+      <div class="credits-scroll">
+        <p><b>METEORFALL: THE LAST DAWN</b></p>
+        <p>Built with Three.js</p>
+        <p>Procedural world · Web Audio synthesis</p>
+        <p>AI-Assisted Development</p>
+        <p>Textures: web-sourced + AI-generated, modified in-house</p>
+        <p>Kael Raven will return.</p>
+      </div>
+      <div class="menu-buttons">
+        <button class="btn big" data-action="close-credits">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCRIPTS (dependency order) ==================== -->
+  <script src="js/vendor/three.min.js"></script>
+  <script src="js/core/EmbeddedTextures.js"></script>
+  <script src="js/core/Utils.js"></script>
+  <script src="js/core/AssetLoader.js"></script>
+  <script src="js/core/SceneManager.js"></script>
+  <script src="js/core/InputManager.js"></script>
+  <script src="js/core/AudioManager.js"></script>
+  <script src="js/core/SaveManager.js"></script>
+  <script src="js/core/UIManager.js"></script>
+
+  <script src="js/effects/ParticleSystem.js"></script>
+  <script src="js/effects/MuzzleFlash.js"></script>
+  <script src="js/effects/ExplosionEffect.js"></script>
+  <script src="js/effects/PostProcessing.js"></script>
+  <script src="js/effects/WeatherEffects.js"></script>
+  <script src="js/effects/MeteorImpactSequence.js"></script>
+
+  <script src="js/world/TerrainGenerator.js"></script>
+  <script src="js/world/WaterSystem.js"></script>
+  <script src="js/world/VegetationSystem.js"></script>
+  <script src="js/world/BuildingGenerator.js"></script>
+  <script src="js/world/MeteorCrater.js"></script>
+  <script src="js/world/DayNightCycle.js"></script>
+  <script src="js/world/WeatherSystem.js"></script>
+  <script src="js/world/WorldGenerator.js"></script>
+
+  <script src="js/characters/PlayerAnimator.js"></script>
+  <script src="js/characters/PlayerCharacter.js"></script>
+  <script src="js/characters/PlayerController.js"></script>
+  <script src="js/characters/SquadMember.js"></script>
+  <script src="js/characters/SquadAI.js"></script>
+  <script src="js/characters/SquadManager.js"></script>
+  <script src="js/characters/NPCManager.js"></script>
+
+  <script src="js/combat/HealthSystem.js"></script>
+  <script src="js/combat/DamageSystem.js"></script>
+  <script src="js/combat/WeaponBase.js"></script>
+  <script src="js/combat/ProjectileSystem.js"></script>
+  <script src="js/combat/CombatEffects.js"></script>
+  <script src="js/combat/WeaponSystem.js"></script>
+
+  <script src="js/monsters/MonsterBase.js"></script>
+  <script src="js/monsters/MonsterAI.js"></script>
+  <script src="js/monsters/MonsterTypes.js"></script>
+  <script src="js/monsters/BossMonster.js"></script>
+  <script src="js/monsters/MonsterSpawner.js"></script>
+  <script src="js/monsters/MonsterManager.js"></script>
+
+  <script src="js/vehicles/VehiclePhysics.js"></script>
+  <script src="js/vehicles/VehicleBase.js"></script>
+  <script src="js/vehicles/VehicleSystem.js"></script>
+
+  <script src="js/missions/MissionBase.js"></script>
+  <script src="js/missions/StoryMissions.js"></script>
+  <script src="js/missions/SideMissions.js"></script>
+  <script src="js/missions/MissionManager.js"></script>
+
+  <script src="js/ui/HUD.js"></script>
+  <script src="js/ui/MainMenu.js"></script>
+  <script src="js/ui/PauseMenu.js"></script>
+  <script src="js/ui/InventoryUI.js"></script>
+  <script src="js/ui/MapUI.js"></script>
+  <script src="js/ui/WeaponWheel.js"></script>
+  <script src="js/ui/SquadCommandUI.js"></script>
+  <script src="js/ui/MissionUI.js"></script>
+
+  <script src="js/core/Game.js"></script>
+</body>
+</html>
