@@ -23,9 +23,16 @@
 
     init() {
       if (this.ctx) return;
+      // Create context lazily. If the browser blocks it (no user gesture yet),
+      // it stays suspended and the first click/keypress resumes it.
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) { this.enabled = false; return; }
-      this.ctx = new AC();
+      try {
+        this.ctx = new AC();
+      } catch (e) {
+        this.enabled = false;
+        return;
+      }
       this.master = this.ctx.createGain();
       this.master.gain.value = this.volumes.master;
       this.master.connect(this.ctx.destination);
@@ -40,11 +47,30 @@
       this._noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
       const data = this._noiseBuf.getChannelData(0);
       for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-      this.startAmbience();
+      // ambience starts on the first successful resume (user gesture)
     }
 
     resume() {
-      if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
+      if (this.ctx && this.ctx.state === "suspended") {
+        const p = this.ctx.resume();
+        if (p && p.then) {
+          p.then(() => {
+            if (!this._ambienceStarted && this._noiseBuf) {
+              this._ambienceStarted = true;
+              this.startAmbience();
+            }
+            if (this._pendingMode && this._pendingMode !== this.musicMode) {
+              const m = this._pendingMode;
+              this._pendingMode = null;
+              this.musicMode = "none";
+              this.setMusicMode(m);
+            }
+          }).catch(() => {});
+        }
+      } else if (this.ctx && this.ctx.state === "running" && !this._ambienceStarted && this._noiseBuf) {
+        this._ambienceStarted = true;
+        this.startAmbience();
+      }
     }
 
     setVolume(category, v) {
@@ -93,7 +119,7 @@
 
     /* ---------------- weapon sounds ---------------- */
     playShot(kind, pos) {
-      if (!this.ctx) return;
+      if (!this.ctx || this.ctx.state !== "running") return;
       const t0 = this.now();
       const s = this._spatial(pos, 1);
       const out = this.ctx.createGain();
@@ -140,7 +166,7 @@
     }
 
     playExplosion(pos, scale) {
-      if (!this.ctx) return;
+      if (!this.ctx || this.ctx.state !== "running") return;
       scale = scale || 1;
       const t0 = this.now();
       const s = this._spatial(pos, 1);
@@ -164,7 +190,7 @@
     }
 
     playReload() {
-      if (!this.ctx) return;
+      if (!this.ctx || this.ctx.state !== "running") return;
       const t0 = this.now();
       for (let i = 0; i < 3; i++) {
         const o = this.ctx.createOscillator();
@@ -178,7 +204,7 @@
     }
 
     playHit(crit) {
-      if (!this.ctx) return;
+      if (!this.ctx || this.ctx.state !== "running") return;
       const t0 = this.now();
       const o = this.ctx.createOscillator();
       o.type = "sine";
@@ -191,7 +217,7 @@
     }
 
     playMonster(kind, pos) {
-      if (!this.ctx) return;
+      if (!this.ctx || this.ctx.state !== "running") return;
       const t0 = this.now();
       const s = this._spatial(pos, 1);
       const out = this.ctx.createGain();
@@ -228,7 +254,7 @@
     }
 
     playUI(kind) {
-      if (!this.ctx) return;
+      if (!this.ctx || this.ctx.state !== "running") return;
       const t0 = this.now();
       const o = this.ctx.createOscillator();
       o.type = "triangle";
@@ -242,7 +268,7 @@
     }
 
     playFootstep(pos, wet) {
-      if (!this.ctx) return;
+      if (!this.ctx || this.ctx.state !== "running") return;
       const t0 = this.now();
       const s = this._spatial(pos, 0.5);
       const out = this.ctx.createGain();
@@ -255,13 +281,13 @@
     }
 
     playThunder() {
-      if (!this.ctx) return;
+      if (!this.ctx || this.ctx.state !== "running") return;
       this.playExplosion(null, 0.7);
     }
 
     /* ---------------- ambience ---------------- */
     startAmbience() {
-      if (!this.ctx) return;
+      if (!this.ctx || this.ctx.state !== "running") return;
       // wind: looping filtered noise with slow gain LFO
       const src = this.ctx.createBufferSource();
       src.buffer = this._noiseBuf;
@@ -292,7 +318,12 @@
     /* ---------------- dynamic music ---------------- */
     /* Generative pads + percussion, crossfaded between modes. */
     setMusicMode(mode) {
-      if (!this.ctx || mode === this.musicMode) return;
+      if (!this.ctx || !this.enabled || mode === this.musicMode) return;
+      if (this.ctx.state === "suspended") {
+        // wait for the user gesture — remember the request and start on resume
+        this._pendingMode = mode;
+        return;
+      }
       this.musicMode = mode;
       if (mode === "none") {
         this._fadeOutMusic(2);

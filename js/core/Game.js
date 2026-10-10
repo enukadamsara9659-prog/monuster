@@ -136,8 +136,7 @@
         MF.ui.fadeIn(0.9);
         this.state = STATE.MENU;
         this.mainMenu.show();
-        MF.audio.init();
-        MF.audio.resume();
+        // audio starts only after the first user gesture (browser policy)
       } catch (err) {
         console.error("METEORFALL boot error:", err);
         const screen = document.getElementById("loading-screen");
