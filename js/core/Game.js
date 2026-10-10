@@ -46,34 +46,42 @@
         return;
       }
 
-      // renderer
-      const canvas = document.getElementById("game-canvas");
-      this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
-      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      this.renderer.shadowMap.enabled = true;
-      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      this.renderer.toneMappingExposure = 1.05;
-      if (THREE.sRGBEncoding !== undefined) this.renderer.outputEncoding = THREE.sRGBEncoding;
+      try {
+        // renderer
+        const canvas = document.getElementById("game-canvas");
+        this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.05;
+        if (THREE.sRGBEncoding !== undefined) this.renderer.outputEncoding = THREE.sRGBEncoding;
 
-      // scene + camera
-      this.scene = new THREE.Scene();
-      this.camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 2600);
-      this.camera.position.set(200, 30, 240);
+        // scene + camera
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 2600);
+        this.camera.position.set(200, 30, 240);
 
-      // core systems
-      MF.input = new MF.InputManager();
-      MF.input.attach(canvas);
-      MF.audio = new MF.AudioManager();
-      MF.save = new MF.SaveManager();
-      MF.ui = new MF.UIManager();
-      MF.ui.init();
-      MF.assets = new MF.AssetLoader();
-      this.sceneManager = new MF.SceneManager(this.scene);
+        // core systems
+        MF.input = new MF.InputManager();
+        MF.input.attach(canvas);
+        MF.audio = new MF.AudioManager();
+        MF.save = new MF.SaveManager();
+        MF.ui = new MF.UIManager();
+        MF.ui.init();
+        MF.assets = new MF.AssetLoader();
+        this.sceneManager = new MF.SceneManager(this.scene);
 
-      // effects
-      MF.screenFx = new MF.PostProcessing();
+        // effects
+        MF.screenFx = new MF.PostProcessing();
+      } catch (err) {
+        console.error("METEORFALL engine error:", err);
+        document.getElementById("loading-screen").innerHTML =
+          '<div class="loading-box"><h2>Engine failed to start</h2><p>' +
+          (err && err.message ? err.message : err) + "</p></div>";
+        return;
+      }
 
       // loading tips
       const tipEl = document.getElementById("loading-tip");
@@ -107,31 +115,39 @@
     }
 
     onAssetsLoaded() {
-      MF.particles = new MF.ParticleSystem(this.scene, MF.assets);
-      MF.muzzle = new MF.MuzzleFlash(this.scene, MF.assets);
-      MF.explosion = new MF.ExplosionEffect(this.scene);
+      try {
+        MF.particles = new MF.ParticleSystem(this.scene, MF.assets);
+        MF.muzzle = new MF.MuzzleFlash(this.scene, MF.assets);
+        MF.explosion = new MF.ExplosionEffect(this.scene);
+        // expose on the game instance too (systems read MF.game.particles / .muzzle / .explosion)
+        this.particles = MF.particles;
+        this.muzzle = MF.muzzle;
+        this.explosion = MF.explosion;
 
-      this.world = new MF.WorldGenerator(this);
-      this.world.build(this.scene, MF.assets, (p) => {
-        const bar = document.getElementById("loading-bar");
-        if (bar) bar.style.width = Math.round(60 + p * 40) + "%";
-      });
+        this.world = new MF.WorldGenerator(this);
+        this.world.build(this.scene, MF.assets, (p) => {
+          const bar = document.getElementById("loading-bar");
+          if (bar) bar.style.width = Math.round(60 + p * 40) + "%";
+        });
 
-      // world systems need terrain baked first — the build steps run async via callbacks;
-      // poll until terrain exists, then finish setup
-      const finish = () => {
-        if (!this.world.terrain || !this.world.terrain.minimapCanvas) {
-          requestAnimationFrame(finish);
-          return;
-        }
+        // world build steps run synchronously; finish setup
         this.setupGameplay();
+        MF.ui.hideScreen("loading-screen");
         MF.ui.fadeIn(0.9);
         this.state = STATE.MENU;
         this.mainMenu.show();
         MF.audio.init();
         MF.audio.resume();
-      };
-      requestAnimationFrame(finish);
+      } catch (err) {
+        console.error("METEORFALL boot error:", err);
+        const screen = document.getElementById("loading-screen");
+        if (screen) {
+          screen.innerHTML =
+            '<div class="loading-box"><h2>Could not start the game</h2><p>' +
+            (err && err.message ? err.message : err) +
+            "</p><p>Open the browser console (F12) for details.</p></div>";
+        }
+      }
     }
 
     setupGameplay() {
@@ -303,10 +319,12 @@
       let dt = (timestamp - this.lastTime) / 1000;
       this.lastTime = timestamp;
       dt = Math.min(dt, 1 / 30);
+      const rawDt = dt;
       if (this.state === STATE.PAUSED || this.state === STATE.MENU || this.state === STATE.DEAD || this.state === STATE.VICTORY) {
         dt = 0;
       }
       this.elapsed += dt;
+      this.menuTime = (this.menuTime || 0) + rawDt;
 
       // ---- global UI keys ----
       const input = MF.input;
@@ -412,7 +430,7 @@
         if (this.mainMenu.visible) this.mainMenu.update(dt);
       } else if (this.state === STATE.MENU) {
         // slow camera orbit over the island for the menu background
-        const t = this.elapsed * 0.08;
+        const t = (this.menuTime || 0) * 0.08;
         this.camera.position.set(1000 + Math.cos(t) * 620, 260 + Math.sin(t * 0.6) * 60, 1000 + Math.sin(t) * 620);
         this.camera.lookAt(1000, 40, 1000);
         this.dayNight && this.dayNight.update(dt, this.camera.position, this.weather);
