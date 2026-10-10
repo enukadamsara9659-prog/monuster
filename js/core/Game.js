@@ -109,6 +109,22 @@
         if (document.hidden && this.state === STATE.PLAYING) this.pause();
       });
 
+      // Browsers only allow audio AFTER a user gesture — unlock on first click/key
+      const unlockAudio = () => {
+        if (this._audioUnlocked) return;
+        MF.audio.init();
+        MF.audio.resume();
+        if (MF.audio.ctx) {
+          this._audioUnlocked = true;
+          MF.audio.musicMode = "none";
+          MF.audio.setMusicMode("exploration");
+          window.removeEventListener("pointerdown", unlockAudio);
+          window.removeEventListener("keydown", unlockAudio);
+        }
+      };
+      window.addEventListener("pointerdown", unlockAudio);
+      window.addEventListener("keydown", unlockAudio);
+
       // start loop
       this.lastTime = performance.now();
       requestAnimationFrame((t) => this.gameLoop(t));
